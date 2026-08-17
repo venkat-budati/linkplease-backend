@@ -10,7 +10,7 @@ from fastapi.testclient import TestClient
 from app import database
 from app.config import Settings, get_settings
 from app.models import Base, DMJob, JobStatus
-from app.database import build_connect_args
+from app.database import build_connect_args, normalize_database_url
 from app.services import claim_due_send_job, get_stats, mark_accepted, mark_failed_or_retry, mark_permanent_failed
 
 
@@ -194,3 +194,10 @@ def test_sqlite_connect_args_still_support_local_tests():
     settings = Settings(database_url="sqlite:///test.db", pseudogram_api_key="test-secret")
 
     assert build_connect_args(settings.database_url, settings) == {"check_same_thread": False}
+
+
+def test_plain_mysql_url_is_normalized_to_pymysql():
+    assert (
+        normalize_database_url("mysql://user:password@example.com:3306/linkplease")
+        == "mysql+pymysql://user:password@example.com:3306/linkplease"
+    )

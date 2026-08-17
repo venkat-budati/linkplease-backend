@@ -31,9 +31,15 @@ def build_connect_args(database_url: str, settings: Settings | None = None) -> d
     return {"ssl": {"ca": str(ca_path)}}
 
 
+def normalize_database_url(database_url: str) -> str:
+    if database_url.startswith("mysql://"):
+        return database_url.replace("mysql://", "mysql+pymysql://", 1)
+    return database_url
+
+
 def make_engine(database_url: str | None = None):
     settings = get_settings()
-    url = database_url or settings.database_url
+    url = normalize_database_url(database_url or settings.database_url)
     connect_args = build_connect_args(url, settings)
     return create_engine(url, connect_args=connect_args, pool_pre_ping=True)
 
