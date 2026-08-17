@@ -11,6 +11,7 @@ from app import database
 from app.config import Settings, get_settings
 from app.models import Base, DMJob, JobStatus
 from app.database import build_connect_args, normalize_database_url
+from app.security import verify_signature
 from app.services import claim_due_send_job, get_stats, mark_accepted, mark_failed_or_retry, mark_permanent_failed
 
 
@@ -75,6 +76,19 @@ def test_invalid_signature_is_rejected(client):
     body = json.dumps(webhook_payload()).encode("utf-8")
     response = client.post("/webhook", content=body, headers={"X-PseudoGram-Signature": "sha256=bad"})
     assert response.status_code == 401
+
+
+def test_missing_signature_is_rejected(client):
+    body = json.dumps(webhook_payload()).encode("utf-8")
+    response = client.post("/webhook", content=body)
+    assert response.status_code == 401
+
+
+def test_signature_must_include_sha256_prefix():
+    body = b'{"event_id":"evt_prefix"}'
+    digest_only = hmac.new(b"test-secret", body, sha256).hexdigest()
+
+    assert verify_signature(body, digest_only, "test-secret") is False
 
 
 def test_webhook_signature_is_calculated_from_exact_raw_body(client):
