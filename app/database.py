@@ -2,6 +2,7 @@ from collections.abc import Generator
 from pathlib import Path
 
 from sqlalchemy import create_engine
+from sqlalchemy.engine import make_url
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 from app.config import Settings, get_settings
@@ -33,7 +34,11 @@ def build_connect_args(database_url: str, settings: Settings | None = None) -> d
 
 def normalize_database_url(database_url: str) -> str:
     if database_url.startswith("mysql://"):
-        return database_url.replace("mysql://", "mysql+pymysql://", 1)
+        database_url = database_url.replace("mysql://", "mysql+pymysql://", 1)
+    if database_url.startswith("mysql+pymysql://"):
+        url = make_url(database_url)
+        url = url.difference_update_query(["ssl-mode", "ssl-ca", "ssl-cert", "ssl-key"])
+        return url.render_as_string(hide_password=False)
     return database_url
 
 

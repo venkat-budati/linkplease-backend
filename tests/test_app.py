@@ -198,6 +198,6 @@ def test_sqlite_connect_args_still_support_local_tests():
 
 def test_plain_mysql_url_is_normalized_to_pymysql():
     assert (
-        normalize_database_url("mysql://user:password@example.com:3306/linkplease")
-        == "mysql+pymysql://user:password@example.com:3306/linkplease"
+        normalize_database_url("mysql://user:password@example.com:3306/linkplease?ssl-mode=REQUIRED&charset=utf8mb4")
+        == "mysql+pymysql://user:password@example.com:3306/linkplease?charset=utf8mb4"
     )
