@@ -131,10 +131,12 @@ Deploy as a normal Python web service with an external MySQL 8 database. Set the
 Recommended deployment settings:
 
 ```bash
-Python version: 3.10+
+Python version: 3.12
 Build command: pip install -r requirements.txt
 Start command: uvicorn app.main:app --host 0.0.0.0 --port $PORT
 ```
+
+Render currently defaults new Python services to a very new Python version. This repo pins Python with `.python-version` so Render uses Python 3.12 instead of the platform default.
 
 ## Known Limitations
 
