@@ -114,10 +114,19 @@ def test_webhook_rejects_signature_for_reserialized_json(client):
 def test_pseudogram_api_key_env_value_is_normalized():
     settings = Settings(
         database_url="sqlite:///test.db",
-        pseudogram_api_key=' "test-secret" ',
+        PSEUDOGRAM_API_KEY=' "test-secret" ',
     )
 
     assert settings.pseudogram_api_key == "test-secret"
+
+
+def test_settings_reads_pseudogram_api_key_environment_variable(monkeypatch):
+    monkeypatch.setenv("DATABASE_URL", "sqlite:///test.db")
+    monkeypatch.setenv("PSEUDOGRAM_API_KEY", "env-secret")
+
+    settings = Settings()
+
+    assert settings.pseudogram_api_key == "env-secret"
 
 
 def test_duplicate_event_and_duplicate_user_rule_are_blocked(client):
@@ -212,7 +221,7 @@ def test_mysql_connect_args_do_not_force_ssl_without_aiven_ca():
     settings = Settings(
         database_url="mysql+pymysql://user:password@example.com:3306/linkplease",
         aiven_ca_path=None,
-        pseudogram_api_key="test-secret",
+        PSEUDOGRAM_API_KEY="test-secret",
     )
 
     assert build_connect_args(settings.database_url, settings) == {}
@@ -225,7 +234,7 @@ def test_mysql_connect_args_use_aiven_ca_when_configured():
     settings = Settings(
         database_url="mysql+pymysql://user:password@example.com:3306/linkplease",
         aiven_ca_path=str(ca_file),
-        pseudogram_api_key="test-secret",
+        PSEUDOGRAM_API_KEY="test-secret",
     )
 
     connect_args = build_connect_args(settings.database_url, settings)
@@ -234,7 +243,7 @@ def test_mysql_connect_args_use_aiven_ca_when_configured():
 
 
 def test_sqlite_connect_args_still_support_local_tests():
-    settings = Settings(database_url="sqlite:///test.db", pseudogram_api_key="test-secret")
+    settings = Settings(database_url="sqlite:///test.db", PSEUDOGRAM_API_KEY="test-secret")
 
     assert build_connect_args(settings.database_url, settings) == {"check_same_thread": False}
 

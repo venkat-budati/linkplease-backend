@@ -10,7 +10,7 @@ from app.config import get_settings
 from app.database import SessionLocal, create_all, get_session
 from app.models import DMJob, JobStatus, utcnow
 from app.schemas import RuleCreate, RuleResponse, StatsResponse, WebhookPayload
-from app.security import verify_signature
+from app.security import signature_diagnostics, verify_signature
 from app.services import create_rule, get_stats, persist_and_process_event
 from app.worker import DMWorker
 
@@ -66,6 +66,17 @@ async def post_webhook(
     raw_body = await request.body()
     settings = get_settings()
     if not verify_signature(raw_body, x_pseudogram_signature, settings.pseudogram_api_key):
+        diagnostics = signature_diagnostics(raw_body, x_pseudogram_signature, settings.pseudogram_api_key)
+        logger.warning(
+            "webhook signature rejected api_key_present=%s api_key_length=%s signature_present=%s "
+            "signature_length=%s expected_signature_length=%s signature_valid=%s",
+            diagnostics["api_key_present"],
+            diagnostics["api_key_length"],
+            diagnostics["signature_present"],
+            diagnostics["signature_length"],
+            diagnostics["expected_signature_length"],
+            diagnostics["signature_valid"],
+        )
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid signature")
 
     payload = WebhookPayload.model_validate_json(raw_body)
