@@ -4,7 +4,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    database_url: str = "mysql+pymysql://username:password@localhost:3306/linkplease?charset=utf8mb4"
+    database_url: str
     pseudogram_base_url: str = "https://pseudogram-api.onrender.com"
     pseudogram_api_key: str = "dev-secret"
     worker_enabled: bool = True
