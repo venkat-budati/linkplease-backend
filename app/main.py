@@ -69,12 +69,20 @@ async def post_webhook(
         diagnostics = signature_diagnostics(raw_body, x_pseudogram_signature, settings.pseudogram_api_key)
         logger.warning(
             "webhook signature rejected api_key_present=%s api_key_length=%s signature_present=%s "
-            "signature_length=%s expected_signature_length=%s signature_valid=%s",
+            "signature_length=%s expected_signature_length=%s signature_starts_with_sha256=%s "
+            "signature_hex_lowercase=%s raw_body_length=%s api_key_fingerprint=%s "
+            "signature_fingerprint=%s expected_signature_fingerprint=%s signature_valid=%s",
             diagnostics["api_key_present"],
             diagnostics["api_key_length"],
             diagnostics["signature_present"],
             diagnostics["signature_length"],
             diagnostics["expected_signature_length"],
+            diagnostics["signature_starts_with_sha256"],
+            diagnostics["signature_hex_lowercase"],
+            diagnostics["raw_body_length"],
+            diagnostics["api_key_fingerprint"],
+            diagnostics["signature_fingerprint"],
+            diagnostics["expected_signature_fingerprint"],
             diagnostics["signature_valid"],
         )
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid signature")

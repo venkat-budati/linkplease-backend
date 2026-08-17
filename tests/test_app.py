@@ -84,6 +84,23 @@ def test_missing_signature_is_rejected(client):
     assert response.status_code == 401
 
 
+def test_modified_body_is_rejected(client):
+    signed_body = json.dumps(webhook_payload(event_id="evt_modified", text="price please")).encode("utf-8")
+    modified_body = json.dumps(webhook_payload(event_id="evt_modified", text="price please!")).encode("utf-8")
+
+    response = client.post("/webhook", content=modified_body, headers=signed_headers(signed_body))
+
+    assert response.status_code == 401
+
+
+def test_wrong_secret_is_rejected(client):
+    body = json.dumps(webhook_payload(event_id="evt_wrong_secret")).encode("utf-8")
+
+    response = client.post("/webhook", content=body, headers=signed_headers(body, secret="wrong-secret"))
+
+    assert response.status_code == 401
+
+
 def test_signature_must_include_sha256_prefix():
     body = b'{"event_id":"evt_prefix"}'
     digest_only = hmac.new(b"test-secret", body, sha256).hexdigest()
