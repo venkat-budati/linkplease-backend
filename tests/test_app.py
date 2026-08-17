@@ -77,6 +77,35 @@ def test_invalid_signature_is_rejected(client):
     assert response.status_code == 401
 
 
+def test_webhook_signature_is_calculated_from_exact_raw_body(client):
+    client.post("/rules", json={"keyword": "price", "dm_message": "price list"})
+    payload = webhook_payload(event_id="evt_raw")
+    raw_body = json.dumps(payload, indent=2).encode("utf-8")
+
+    response = client.post("/webhook", content=raw_body, headers=signed_headers(raw_body))
+
+    assert response.status_code == 200
+
+
+def test_webhook_rejects_signature_for_reserialized_json(client):
+    payload = webhook_payload(event_id="evt_reserialized")
+    raw_body = json.dumps(payload, indent=2).encode("utf-8")
+    compact_body = json.dumps(payload, separators=(",", ":")).encode("utf-8")
+
+    response = client.post("/webhook", content=raw_body, headers=signed_headers(compact_body))
+
+    assert response.status_code == 401
+
+
+def test_pseudogram_api_key_env_value_is_normalized():
+    settings = Settings(
+        database_url="sqlite:///test.db",
+        pseudogram_api_key=' "test-secret" ',
+    )
+
+    assert settings.pseudogram_api_key == "test-secret"
+
+
 def test_duplicate_event_and_duplicate_user_rule_are_blocked(client):
     client.post("/rules", json={"keyword": "price", "dm_message": "price list"})
     body = json.dumps(webhook_payload(event_id="evt_dup")).encode("utf-8")
