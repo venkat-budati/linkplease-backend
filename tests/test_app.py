@@ -8,8 +8,9 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app import database
-from app.config import get_settings
+from app.config import Settings, get_settings
 from app.models import Base, DMJob, JobStatus
+from app.database import build_connect_args
 from app.services import claim_due_send_job, get_stats, mark_accepted, mark_failed_or_retry, mark_permanent_failed
 
 
@@ -162,3 +163,34 @@ def test_500_event_burst_is_absorbed_into_durable_queue(client):
         assert response.status_code == 200
 
     assert client.get("/stats").json()["queued"] == 500
+
+
+def test_mysql_connect_args_do_not_force_ssl_without_aiven_ca():
+    settings = Settings(
+        database_url="mysql+pymysql://user:password@example.com:3306/linkplease",
+        aiven_ca_path=None,
+        pseudogram_api_key="test-secret",
+    )
+
+    assert build_connect_args(settings.database_url, settings) == {}
+
+
+def test_mysql_connect_args_use_aiven_ca_when_configured():
+    ca_file = Path("test-dbs") / f"{uuid4()}-ca.pem"
+    ca_file.parent.mkdir(exist_ok=True)
+    ca_file.write_text("test-ca", encoding="utf-8")
+    settings = Settings(
+        database_url="mysql+pymysql://user:password@example.com:3306/linkplease",
+        aiven_ca_path=str(ca_file),
+        pseudogram_api_key="test-secret",
+    )
+
+    connect_args = build_connect_args(settings.database_url, settings)
+
+    assert connect_args == {"ssl": {"ca": str(ca_file.resolve())}}
+
+
+def test_sqlite_connect_args_still_support_local_tests():
+    settings = Settings(database_url="sqlite:///test.db", pseudogram_api_key="test-secret")
+
+    assert build_connect_args(settings.database_url, settings) == {"check_same_thread": False}

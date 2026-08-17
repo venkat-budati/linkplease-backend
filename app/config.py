@@ -5,6 +5,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     database_url: str
+    aiven_ca_path: str | None = None
     pseudogram_base_url: str = "https://pseudogram-api.onrender.com"
     pseudogram_api_key: str = "dev-secret"
     worker_enabled: bool = True

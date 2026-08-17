@@ -56,6 +56,8 @@ Main tables:
 
 MySQL 8 is the intended deployment database. SQLite is used only by the automated unit tests as a lightweight local fallback.
 
+Schema creation uses SQLAlchemy `Base.metadata.create_all()` during FastAPI startup. A fresh Aiven database starts empty; on first successful startup the application creates the required tables and constraints from the models.
+
 ## Reliability Choices
 
 - Event idempotency uses the unique `events.event_id`.
@@ -96,6 +98,7 @@ The durable DM worker runs inside the FastAPI process when `WORKER_ENABLED=true`
 ## Environment Variables
 
 - `DATABASE_URL`: SQLAlchemy URL. Use `mysql+pymysql://username:password@host:3306/linkplease?charset=utf8mb4`.
+- `AIVEN_CA_PATH`: path to the Aiven CA certificate file, for example `ca.pem`. Set this on Render when using Aiven MySQL. Leave unset for local MySQL without SSL.
 - `PSEUDOGRAM_BASE_URL`: defaults to `https://pseudogram-api.onrender.com`.
 - `PSEUDOGRAM_API_KEY`: also used as webhook HMAC secret.
 - `WORKER_ENABLED`: set `false` for endpoint-only tests.
@@ -127,6 +130,8 @@ The script starts a simulation and prints the returned truth payload so you can 
 ## Deployment
 
 Deploy as a normal Python web service with an external MySQL 8 database. Set the environment variables above, expose the web process on `$PORT` or `8000`, and keep the service live for the assignment grading window.
+
+For Aiven MySQL, add the CA certificate file to the repository or deployment filesystem and set `AIVEN_CA_PATH` to that relative path. Do not put passwords or API keys in the certificate file.
 
 Recommended deployment settings:
 
